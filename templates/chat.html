@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT-like Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-sidebar">
+            {% for thread in threads %}
+                <div class="chat-summary" data-thread-id="{{ thread.id }}">
+                    <p><strong>Chat {{ thread.id }}</strong></p>
+                    <p>{{ thread.messages[-1].content if thread.messages else '' }}</p>
+                    <form method="post" action="{{ url_for('delete_thread') }}" class="delete-form">
+                        <input type="hidden" name="thread_id" value="{{ thread.id }}">
+                        <button type="submit" class="delete-button">Delete</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="chat-main">
+            <div class="chat-box" id="chat-box">
+                {% if selected_thread %}
+                    {% for message in selected_thread.messages %}
+                        <div class="message {{ 'user' if message.role == 'user' else 'assistant' }}">
+                            <p>{{ message.content }}</p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No active chats. Start a new chat!</p>
+                {% endif %}
+            </div>
+            <form id="message-form" method="post" action="{{ url_for('send_message') }}">
+                <input type="hidden" name="thread_id" id="thread-id" value="{{ selected_thread.id if selected_thread else 0 }}">
+                <div class="input-group">
+                    <input type="text" name="message" id="message-input" placeholder="Type your message here..." required>
+                    <button type="submit">Send</button>
+                </div>
+            </form>
+            <form method="post" action="{{ url_for('new_thread') }}" class="new-thread-form">
+                <button type="submit">Start New Chat</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        document.querySelectorAll('.chat-summary').forEach(summary => {
+            summary.addEventListener('click', function() {
+                const threadId = this.dataset.threadId;
+                window.location.href = `/load_thread/${threadId}`;
+            });
+        });
+    </script>
+</body>
+</html>
